@@ -33,15 +33,13 @@ O projeto foi criado como peça de portfólio técnico, para aprimorar os conhec
 | **Seed de dados** | `python manage.py seed_data` — popula banco com dados realistas |
 | **Infraestrutura** | Docker Compose com serviços `web` (Django) e `db` (Postgres) |
 | **Healthcheck** | `GET /health` → `{ "status": "ok" }` |
-| **Serializers — Consents** | `ConsentSerializer` (leitura) e `ConsentCreateSerializer` (criação) com saída camelCase, validação de escopos e cálculo automático de expiração |
 
 ### 🔄 Em desenvolvimento
 
 | Componente | Detalhes |
 |---|---|
-| **Serializers — Accounts / Transactions** | A implementar seguindo o mesmo padrão camelCase |
-| **Views e rotas (endpoints)** | Views DRF + URLconfs para contas, transações e consentimentos |
-| **Fluxo de consentimento** | Criação, aprovação e revogação via API |
+| **Endpoints de API** | Serializers criados; views e rotas a implementar |
+| **Fluxo de consentimento** | Lógica de criação, aprovação e revogação via API |
 | **Autenticação OAuth2** | Token de acesso com escopos e expiração |
 | **Testes automatizados** | pytest-django cobrindo regras de negócio |
 | **Frontend** | Dashboard React/TypeScript (fase futura) |
@@ -102,8 +100,5 @@ docker compose exec web python manage.py seed_data
 # Acesse http://localhost:8000/admin
 ```
 
-## Escopo e prazo
-
-O projeto foi planejado para ser concluído em **uma semana**, com escopo intencionalmente enxuto: um único "banco" simulado, fluxo de consentimento completo e funcional, três telas essenciais no frontend (login, consentimento e dashboard) e testes automatizados concentrados nas regras de negócio mais sensíveis.
 
 Itens mais avançados do padrão real — como mTLS, assinatura de payloads via JWS e certificação FAPI — não são implementados, mas são documentados aqui como requisitos de produção que o autor compreende, ainda que estejam fora do escopo de um projeto de portfólio.
