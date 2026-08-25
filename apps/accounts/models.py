@@ -1,4 +1,5 @@
 import uuid
+from django.core.validators import RegexValidator
 from django.db import models
 from django.contrib.auth.models import User
 
@@ -29,7 +30,16 @@ class Account(models.Model):
         verbose_name='ID da Conta (Open Finance)'
     )
     brand_name = models.CharField(max_length=80, verbose_name='Nome da Marca')
-    company_cnpj = models.CharField(max_length=14, verbose_name='CNPJ da Instituição')
+    company_cnpj = models.CharField(
+        max_length=14,
+        validators=[
+            RegexValidator(
+                regex=r'^\d{14}$',
+                message='CNPJ deve conter apenas números, com 14 dígitos.'
+            )
+        ],
+        verbose_name='CNPJ da Instituição'
+    )
     type = models.CharField(
         max_length=30,
         choices=AccountType.choices,
@@ -66,17 +76,17 @@ class Balance(models.Model):
     )
     available_amount = models.DecimalField(
         max_digits=15,
-        decimal_places=4,
+        decimal_places=2,
         verbose_name='Saldo Disponível'
     )
     blocked_amount = models.DecimalField(
         max_digits=15,
-        decimal_places=4,
+        decimal_places=2,
         verbose_name='Saldo Bloqueado'
     )
     automatically_invested_amount = models.DecimalField(
         max_digits=15,
-        decimal_places=4,
+        decimal_places=2,
         verbose_name='Saldo Aplicado Automaticamente'
     )
     currency = models.CharField(max_length=3, default='BRL', verbose_name='Moeda')

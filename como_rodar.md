@@ -19,9 +19,13 @@ O projeto está configurado para rodar a aplicação Django e o banco PostgreSQL
    ```
    *Este comando compilará a imagem da aplicação Django (`web`) e baixará a imagem oficial do Postgres (`db`), inicializando ambos os serviços.*
 
-2. **Executar as Migrações Iniciais:**
-   Para criar as tabelas e a estrutura inicial no banco de dados Postgres:
+2. **Gerar e Executar as Migrações:**
+   Para criar os arquivos de migração e aplicar a estrutura no banco de dados Postgres:
    ```bash
+   # Gerar arquivos de migração (caso haja alterações em modelos)
+   docker compose exec web python manage.py makemigrations
+
+   # Aplicar migrações no banco de dados
    docker compose exec web python manage.py migrate
    ```
 
@@ -53,7 +57,7 @@ O projeto está configurado para rodar a aplicação Django e o banco PostgreSQL
 
 ## 💻 Como Rodar Localmente (Sem Docker)
 
-Se preferir rodar a aplicação diretamente no seu host (por exemplo, para debugging local):
+Se preferir rodar a aplicação Django diretamente no seu host (por exemplo, para debugging local):
 
 ### 1. Inicializar e Ativar o Ambiente Virtual
 * No Windows (PowerShell):
@@ -73,14 +77,31 @@ pip install -r requirements.txt
 ```
 
 ### 3. Configurar Variáveis de Ambiente
-Copie o arquivo de exemplo e edite as credenciais caso utilize uma conexão de banco local diferente:
+Copie o arquivo de exemplo e ajuste as credenciais:
 ```bash
 cp .env.example .env
 ```
 
-### 4. Executar Migrações e Inicializar o Servidor local
+> ⚠️ **Atenção ao Host do Banco de Dados (`DATABASE_URL`):**
+> No arquivo `.env`, o parâmetro `DATABASE_URL` vem pré-configurado para o container Docker (`@db:5432`). 
+> Ao executar diretamente na sua máquina local, certifique-se de que o container do Postgres está rodando (`docker compose up -d db`) e altere o host no `.env` para `localhost`:
+> ```env
+> DATABASE_URL=postgres://postgres:postgres@localhost:5432/openfinance
+> ```
+> Ou passe a variável de ambiente no seu terminal PowerShell antes de executar os comandos:
+> ```powershell
+> $env:DATABASE_URL="postgres://postgres:postgres@localhost:5432/openfinance"
+> ```
+
+### 4. Executar Migrações e Inicializar o Servidor Local
 ```bash
+# Gerar migrações (se houver alterações nos models)
+python manage.py makemigrations
+
+# Aplicar migrações no banco
 python manage.py migrate
+
+# Iniciar o servidor local
 python manage.py runserver
 ```
 A aplicação local estará disponível em `http://localhost:8000/`.
