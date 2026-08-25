@@ -1,5 +1,19 @@
+# ─── Core ─────────────────────────────────────────────────────────────────────
 Django>=5.0,<5.1
 djangorestframework>=3.15,<3.16
-psycopg2-binary>=2.9.9
-django-environ>=0.11.2
+
+# ─── Banco de dados ───────────────────────────────────────────────────────────
+psycopg2-binary>=2.9.9     # driver PostgreSQL
+
+# ─── Configuração de ambiente ─────────────────────────────────────────────────
+django-environ>=0.11.2     # leitura de variáveis de ambiente via .env
+
+# ─── Servidor WSGI (produção) ─────────────────────────────────────────────────
 gunicorn>=21.2.0
+
+# ─── Futuras dependências planejadas ──────────────────────────────────────────
+# djangorestframework-camel-case  # conversão automática snake_case ↔ camelCase
+#                                  # (atualmente feita via source= nos serializers)
+# drf-spectacular                  # geração de documentação Swagger/OpenAPI
+# django-oauth-toolkit             # fluxo OAuth2 para autenticação e consentimento
+# pytest-django                    # testes automatizados
