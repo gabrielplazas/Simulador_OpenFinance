@@ -261,3 +261,30 @@ python manage.py migrate
 python manage.py seed_data
 python manage.py runserver
 ```
+
+---
+
+## 📡 Documentação OpenAPI 3.0 (Swagger)
+
+O projeto inclui documentação interativa da API com Swagger UI:
+
+- **Swagger UI:** http://localhost:8000/api/docs/
+- **ReDoc:** http://localhost:8000/api/redoc/
+- **Schema OpenAPI:** http://localhost:8000/api/schema/
+
+### Autenticação no Swagger
+
+A documentação suporta duas formas de autenticação:
+
+#### 1. Basic Auth (Recomendado para testes rápidos)
+1. Clique no botão **Authorize** (🔒) no topo da página Swagger
+2. Selecione **basicAuth**
+3. Insira:
+   - **Username:** 
+   - **Password:** 
+4. Clique em **Authorize** → **Close**
+
+#### 2. Session Auth via cookie (mais próximo do real)
+1. Faça login na API:
+   - Vá para 
+   - Clique em **Try
