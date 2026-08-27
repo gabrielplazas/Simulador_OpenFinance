@@ -1,6 +1,6 @@
 # Como Rodar o Simulador de Open Finance
 
-Este documento explica os passos e comandos necessários para executar o projeto localmente, tanto utilizando **Docker Compose** (ambiente recomendado) quanto executando **localmente na máquina**.
+Este documento explica os passos e comandos necessários para executar o projeto, rodar a suíte de testes automatizados e testar os endpoints da API via **Docker Compose** ou diretamente na máquina.
 
 ---
 
@@ -17,14 +17,10 @@ O projeto está configurado para rodar a aplicação Django e o banco PostgreSQL
    ```bash
    docker compose up --build -d
    ```
-   *Compila a imagem da aplicação Django (`web`) e sobe o Postgres (`db`).*
+   *Compila a imagem da aplicação Django (`web`) e inicializa o PostgreSQL (`db`).*
 
 2. **Aplicar as Migrações:**
    ```bash
-   # Gerar arquivos de migração (caso haja alterações em modelos)
-   docker compose exec web python manage.py makemigrations
-
-   # Aplicar migrações no banco de dados
    docker compose exec web python manage.py migrate
    ```
 
@@ -32,9 +28,9 @@ O projeto está configurado para rodar a aplicação Django e o banco PostgreSQL
    ```bash
    docker compose exec web python manage.py seed_data
    ```
-   Cria automaticamente 4 usuários, ~5 contas, ~10 consentimentos e ~80 transações realistas.
+   Cria automaticamente 4 usuários, contas bancárias, consentimentos e dezenas de transações realistas.
 
-   Para limpar tudo e popular novamente do zero:
+   *Para resetar o banco e popular novamente do zero:*
    ```bash
    docker compose exec web python manage.py seed_data --clear
    ```
@@ -52,21 +48,13 @@ O projeto está configurado para rodar a aplicação Django e o banco PostgreSQL
    ```bash
    docker compose exec web python manage.py createsuperuser
    ```
-   Acesso ao painel: `http://localhost:8000/admin`
-
-   Para remover um admin depois:
-   ```bash
-   docker compose exec web python manage.py shell -c "from django.contrib.auth.models import User; User.objects.filter(username='NOME_DO_ADMIN').delete()"
-   ```
+   Painel administrativo disponível em: `http://localhost:8000/admin`
 
 5. **Validar o Funcionamento (Healthcheck):**
    ```bash
    curl http://localhost:8000/health
    ```
-   **Resposta esperada (Status 200 OK):**
-   ```json
-   { "status": "ok" }
-   ```
+   *Resposta esperada:* `{ "status": "ok" }`
 
 6. **Parar a Execução:**
    ```bash
@@ -75,79 +63,173 @@ O projeto está configurado para rodar a aplicação Django e o banco PostgreSQL
 
 ---
 
-## 🧪 Testando a API (Insomnia / curl)
+## 🧪 Executando os Testes Automatizados
 
-### Configuração básica no Insomnia
+O projeto utiliza **`pytest-django`** para testar regras de negócio, ciclo de vida do consentimento e proteções de autorização.
 
-1. Crie um **Environment** com a variável `base_url = http://localhost:8000`
-2. Em cada requisição, configure **Auth → Basic Auth**:
-   - **Username:** `Gabriel_Admin`
-   - **Password:** sua senha de admin
-3. Header obrigatório: `Content-Type: application/json`
+### Rodar no Docker:
+```bash
+docker compose exec web pytest
+```
 
----
-
-### Endpoints disponíveis
-
-#### Healthcheck
-
-| Método | URL | Descrição |
-|---|---|---|
-| `GET` | `{{base_url}}/health` | Verifica se o servidor está no ar |
-
-**Resposta:**
-```json
-{ "status": "ok" }
+### Rodar localmente (no venv):
+```bash
+pytest
 ```
 
 ---
 
-#### Consentimentos *(endpoints a implementar — contrato já definido)*
+## 📡 Testando os Endpoints da API (Insomnia / Postman / cURL)
 
-Os serializers estão implementados. As views e rotas ainda serão criadas. Quando prontas, os contratos serão:
+### Configuração Básica
+* **Base URL:** `http://localhost:8000`
+* **Autenticação:** Basic Auth (ex: usuário `ana.silva` e senha `Senha@123`)
+* **Headers Padrão:**
+  * `Content-Type: application/json`
 
-**`POST /open-banking/consents/v1/consents`** — Criar consentimento
-```json
-// Request body
-{
-  "permissions": ["ACCOUNTS_READ", "ACCOUNTS_BALANCES_READ"],
-  "expirationDays": 90
-}
-```
-```json
-// Response 201 Created
-{
-  "consentId": "urn:banco:consent:uuid",
-  "status": "AWAITING_AUTHORISATION",
-  "permissions": ["ACCOUNTS_READ", "ACCOUNTS_BALANCES_READ"],
-  "creationDateTime": "2026-08-25T20:00:00Z",
-  "expirationDateTime": "2026-11-23T20:00:00Z",
-  "statusUpdateDateTime": "2026-08-25T20:00:00Z"
-}
-```
+---
 
-**Escopos válidos para `permissions`:**
+### 1. Módulo de Consentimentos
 
-| Escopo | Descrição |
-|---|---|
-| `ACCOUNTS_READ` | Leitura de dados da conta |
-| `ACCOUNTS_BALANCES_READ` | Leitura de saldo |
-| `ACCOUNTS_TRANSACTIONS_READ` | Leitura de transações |
-| `ACCOUNTS_OVERDRAFT_LIMITS_READ` | Leitura de limite de cheque especial |
-| `CUSTOMERS_PERSONAL_IDENTIFICATIONS_READ` | Dados cadastrais pessoais |
-| `CUSTOMERS_PERSONAL_ADITTIONAL_INFO_READ` | Dados cadastrais adicionais |
-| `CUSTOMERS_BUSINESS_IDENTIFICATIONS_READ` | Dados cadastrais PJ |
-| `CUSTOMERS_BUSINESS_ADITTIONAL_INFO_READ` | Dados cadastrais adicionais PJ |
+#### A. Criar Consentimento
+* **`POST /open-banking/consents/v1/consents/`**
+* **Payload:**
+  ```json
+  {
+    "permissions": [
+      "ACCOUNTS_READ",
+      "ACCOUNTS_BALANCES_READ",
+      "ACCOUNTS_TRANSACTIONS_READ"
+    ],
+    "expirationDays": 90
+  }
+  ```
+* **Resposta (201 Created):**
+  ```json
+  {
+    "data": {
+      "consentId": "c4b1d5a8-2041-47ec-a4dc-86e5898bc57d",
+      "status": "AWAITING_AUTHORISATION",
+      "permissions": [
+        "ACCOUNTS_READ",
+        "ACCOUNTS_BALANCES_READ",
+        "ACCOUNTS_TRANSACTIONS_READ"
+      ],
+      "creationDateTime": "2026-08-27T14:30:00Z",
+      "expirationDateTime": "2026-11-25T14:30:00Z",
+      "statusUpdateDateTime": "2026-08-27T14:30:00Z"
+    }
+  }
+  ```
 
-**`GET /open-banking/consents/v1/consents/{consentId}`** — Consultar consentimento
+#### B. Autorizar Consentimento
+* **`PATCH /open-banking/consents/v1/consents/{consentId}/`**
+* **Payload:**
+  ```json
+  {
+    "status": "AUTHORISED"
+  }
+  ```
 
-> Enquanto as views não estão prontas, navegue pelos consentimentos em: `http://localhost:8000/admin/consents/consent/`
+#### C. Consultar Consentimento
+* **`GET /open-banking/consents/v1/consents/{consentId}/`**
+
+#### D. Revogar Consentimento
+* **`DELETE /open-banking/consents/v1/consents/{consentId}/`**
+* **Resposta:** `204 No Content`
+
+---
+
+### 2. Módulo de Contas e Saldos (Protegido por Consentimento)
+
+> ⚠️ **Importante:** Todos os endpoints de contas e transações **exigem** o cabeçalho HTTP:
+> `X-Consent-Id: <UUID_DO_CONSENTIMENTO_AUTORIZADO>`
+
+#### A. Listar Contas
+* **`GET /open-banking/accounts/v1/accounts/`**
+* **Header:** `X-Consent-Id: c4b1d5a8-2041-47ec-a4dc-86e5898bc57d`
+* **Escopo Exigido:** `ACCOUNTS_READ`
+* **Resposta (200 OK):**
+  ```json
+  {
+    "data": [
+      {
+        "accountId": "a1b2c3d4-0000-0000-0000-000000000001",
+        "brandName": "Banco Itaú S.A.",
+        "companyCnpj": "60701190000104",
+        "type": "CONTA_DEPOSITO_A_VISTA",
+        "subtype": "INDIVIDUAL",
+        "number": "54321",
+        "branchCode": "0001",
+        "checkDigit": "7",
+        "currency": "BRL"
+      }
+    ],
+    "links": { "self": "..." },
+    "meta": { "totalRecords": 1, "totalPages": 1 }
+  }
+  ```
+
+#### B. Detalhar Conta
+* **`GET /open-banking/accounts/v1/accounts/{accountId}/`**
+* **Header:** `X-Consent-Id: <UUID_DO_CONSENTIMENTO>`
+* **Escopo Exigido:** `ACCOUNTS_READ`
+
+#### C. Consultar Saldo
+* **`GET /open-banking/accounts/v1/accounts/{accountId}/balances/`**
+* **Header:** `X-Consent-Id: <UUID_DO_CONSENTIMENTO>`
+* **Escopo Exigido:** `ACCOUNTS_BALANCES_READ`
+* **Resposta (200 OK):**
+  ```json
+  {
+    "data": {
+      "availableAmount": "15420.50",
+      "blockedAmount": "0.00",
+      "automaticallyInvestedAmount": "2500.00",
+      "currency": "BRL",
+      "updateDateTime": "2026-08-27T10:00:00Z"
+    }
+  }
+  ```
+
+---
+
+### 3. Módulo de Extrato e Transações (Protegido por Consentimento)
+
+#### A. Consultar Extrato da Conta
+* **`GET /open-banking/accounts/v1/accounts/{accountId}/transactions/`**
+* **Header:** `X-Consent-Id: <UUID_DO_CONSENTIMENTO>`
+* **Escopo Exigido:** `ACCOUNTS_TRANSACTIONS_READ`
+* **Parâmetros Opcionais de Query:**
+  * `?fromDate=2026-01-01&toDate=2026-08-27&page=1&page-size=25`
+* **Resposta (200 OK):**
+  ```json
+  {
+    "data": [
+      {
+        "transactionId": "f9e8d7c6-1111-2222-3333-444455556666",
+        "amount": "250.00",
+        "currency": "BRL",
+        "creditDebitType": "DEBITO",
+        "transactionStatus": "LANCADO",
+        "transactionDate": "2026-08-25",
+        "transactionDateTime": "2026-08-25T14:30:00Z",
+        "transactionType": "PIX",
+        "description": "Transferência enviada via PIX",
+        "payeeCnpjCpf": "12345678901",
+        "payeeName": "João Ferreira"
+      }
+    ],
+    "links": { "self": "..." },
+    "meta": { "totalRecords": 18, "totalPages": 1 }
+  }
+  ```
 
 ---
 
 ## 💻 Como Rodar Localmente (Sem Docker)
 
-Se preferir rodar o Django diretamente no host (ex: para debugging com breakpoints):
+Se preferir rodar o Django diretamente no host:
 
 ### 1. Inicializar e Ativar o Ambiente Virtual
 * **Windows (PowerShell):**
@@ -166,59 +248,16 @@ Se preferir rodar o Django diretamente no host (ex: para debugging com breakpoin
 pip install -r requirements.txt
 ```
 
-### 3. Configurar Variáveis de Ambiente
+### 3. Configurar o `.env` e Iniciar o Banco
 ```bash
 cp .env.example .env
+# Certifique-se de que o host aponta para localhost no DATABASE_URL
+docker compose up -d db
 ```
 
-> ⚠️ **Atenção ao Host do Banco de Dados:**
-> O `.env.example` vem com `@db:5432` (hostname do container Docker).
-> Ao rodar o Django fora do Docker, mantenha o Postgres rodando via container
-> (`docker compose up -d db`) e altere o host para `localhost` no `.env`:
-> ```env
-> DATABASE_URL=postgres://postgres:postgres@localhost:5432/openfinance
-> ```
-> Ou passe inline no PowerShell antes de rodar:
-> ```powershell
-> $env:DATABASE_URL="postgres://postgres:postgres@localhost:5432/openfinance"
-> ```
-
-### 4. Executar Migrações e Iniciar o Servidor
+### 4. Executar Migrações, Seed e Servidor
 ```bash
-python manage.py makemigrations
 python manage.py migrate
-python manage.py seed_data   # popular dados de teste
+python manage.py seed_data
 python manage.py runserver
-```
-Aplicação disponível em `http://localhost:8000/`.
-
----
-
-## 📂 Estrutura de Apps do Projeto
-
-```
-apps/
-├── core/           # Infraestrutura, utilitários e management commands
-│   └── management/
-│       └── commands/
-│           └── seed_data.py   # Comando para popular dados de teste
-├── accounts/       # Contas bancárias e saldos
-├── transactions/   # Extrato e transações financeiras
-└── consents/       # Fluxo de consentimento Open Finance
-```
-
-### Comandos úteis de desenvolvimento
-
-```bash
-# Ver logs da aplicação em tempo real
-docker compose logs -f web
-
-# Acessar o shell do Django (REPL interativo com ORM)
-docker compose exec web python manage.py shell
-
-# Acessar o banco de dados diretamente
-docker compose exec db psql -U postgres -d openfinance
-
-# Verificar migrations pendentes
-docker compose exec web python manage.py showmigrations
 ```
