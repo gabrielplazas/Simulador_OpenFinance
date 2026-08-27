@@ -66,6 +66,7 @@ def _paginated_response(request, queryset, serializer_class):
 
 
 class AccountListView(APIView):
+    serializer_class = AccountSerializer
     """
     GET /open-banking/accounts/v1/accounts
     Lista as contas bancárias do usuário autenticado vinculadas ao consentimento.
@@ -79,6 +80,7 @@ class AccountListView(APIView):
 
 
 class AccountDetailView(APIView):
+    serializer_class = AccountSerializer
     """
     GET /open-banking/accounts/v1/accounts/{accountId}
     Detalhes de uma conta bancária específica.

@@ -119,6 +119,7 @@ def _paginated_response(request, queryset):
 # ---------------------------------------------------------------------------
 
 class ConsentListCreateView(APIView):
+    serializer_class = ConsentSerializer
     """
     GET  /open-banking/consents/v1/consents  → lista paginada dos consentimentos do usuário
     POST /open-banking/consents/v1/consents  → cria novo consentimento
@@ -157,6 +158,7 @@ class ConsentListCreateView(APIView):
 # ---------------------------------------------------------------------------
 
 class ConsentDetailView(APIView):
+    serializer_class = ConsentSerializer
     """
     GET    /open-banking/consents/v1/consents/{consentId}  → detalha consentimento
     PATCH  /open-banking/consents/v1/consents/{consentId}  → autoriza ou rejeita

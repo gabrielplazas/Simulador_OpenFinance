@@ -61,6 +61,7 @@ def _paginated_response(request, queryset, serializer_class):
 
 
 class TransactionListView(APIView):
+    serializer_class = TransactionSerializer
     """
     GET /open-banking/accounts/v1/accounts/{accountId}/transactions
     Consulta o extrato de transações de uma conta bancária vinculada ao consentimento.
