@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.urls import path, include
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
+from apps.core.login_view import LoginView, LogoutView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -16,6 +17,10 @@ urlpatterns = [
     # Rotas internas / aliases
     path('accounts/', include('accounts.urls')),
     path('transactions/', include('transactions.urls')),
+
+    # Autenticação via API
+    path('api/login/', LoginView.as_view(), name='api-login'),
+    path('api/logout/', LogoutView.as_view(), name='api-logout'),
 
     # Documentação OpenAPI 3.0 (Swagger)
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
