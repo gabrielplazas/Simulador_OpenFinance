@@ -94,6 +94,7 @@ class AccountDetailView(APIView):
 
 
 class AccountBalanceView(APIView):
+    serializer_class = BalanceSerializer
     """
     GET /open-banking/accounts/v1/accounts/{accountId}/balances
     Consulta de saldos (disponível, bloqueado, aplicado) de uma conta específica.
