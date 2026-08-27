@@ -11,9 +11,11 @@ django-environ>=0.11.2     # leitura de variáveis de ambiente via .env
 # ─── Servidor WSGI (produção) ─────────────────────────────────────────────────
 gunicorn>=21.2.0
 
+# ─── Testes automatizados ─────────────────────────────────────────────────────
+pytest>=8.0.0
+pytest-django>=4.8.0
+
 # ─── Futuras dependências planejadas ──────────────────────────────────────────
 # djangorestframework-camel-case  # conversão automática snake_case ↔ camelCase
-#                                  # (atualmente feita via source= nos serializers)
 # drf-spectacular                  # geração de documentação Swagger/OpenAPI
 # django-oauth-toolkit             # fluxo OAuth2 para autenticação e consentimento
-# pytest-django                    # testes automatizados
