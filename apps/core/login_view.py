@@ -3,15 +3,41 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, OpenApiExample
+from rest_framework import serializers
+
+
+class LoginSerializer(serializers.Serializer):
+    username = serializers.CharField(help_text='Nome de usuário')
+    password = serializers.CharField(help_text='Senha', style={'input_type': 'password'})
+
+
+class LoginResponseSerializer(serializers.Serializer):
+    status = serializers.CharField()
+    username = serializers.CharField()
+    sessionid = serializers.CharField()
+    message = serializers.CharField()
+
 
 class LoginView(APIView):
     permission_classes = [AllowAny]
     
     @extend_schema(
+        request=LoginSerializer,
+        responses={
+            200: LoginResponseSerializer,
+            400: dict,
+            401: dict
+        },
         summary='Login via API',
-        description='Autentica usuário e retorna cookie sessionid',
-        responses={200: dict, 400: dict, 401: dict}
+        description='Autentica usuário e retorna cookie sessionid para uso com cookieAuth no Swagger',
+        examples=[
+            OpenApiExample(
+                'Login com ana.silva',
+                value={'username': 'ana.silva', 'password': 'Senha@123'},
+                request_only=True
+            )
+        ]
     )
     def post(self, request):
         username = request.data.get('username')
@@ -44,10 +70,11 @@ class LoginView(APIView):
             status=status.HTTP_401_UNAUTHORIZED
         )
 
+
 class LogoutView(APIView):
     @extend_schema(
         summary='Logout via API',
-        description='Invalida sessão atual',
+        description='Invalida sessão atual e remove cookie',
         responses={200: dict}
     )
     def post(self, request):
