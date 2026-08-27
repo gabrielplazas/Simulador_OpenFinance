@@ -1,0 +1,297 @@
+openapi: 3.0.3
+info:
+  title: Open Finance Brasil - API Simulada
+  version: 1.0.0
+  description: Projeto de simulação do padrão Open Finance Brasil com consentimento
+    e escopos granulares
+paths:
+  /accounts/:
+    get:
+      operationId: accounts_retrieve
+      description: |-
+        GET /open-banking/accounts/v1/accounts
+        Lista as contas bancárias do usuário autenticado vinculadas ao consentimento.
+      tags:
+      - accounts
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          description: No response body
+  /accounts/{account_id}/:
+    get:
+      operationId: accounts_retrieve_2
+      description: |-
+        GET /open-banking/accounts/v1/accounts/{accountId}
+        Detalhes de uma conta bancária específica.
+      parameters:
+      - in: path
+        name: account_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - accounts
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          description: No response body
+  /accounts/{account_id}/balances/:
+    get:
+      operationId: accounts_balances_retrieve
+      description: |-
+        GET /open-banking/accounts/v1/accounts/{accountId}/balances
+        Consulta de saldos (disponível, bloqueado, aplicado) de uma conta específica.
+      parameters:
+      - in: path
+        name: account_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - accounts
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          description: No response body
+  /accounts/{account_id}/transactions/:
+    get:
+      operationId: accounts_transactions_retrieve
+      description: |-
+        GET /open-banking/accounts/v1/accounts/{accountId}/transactions
+        Consulta o extrato de transações de uma conta bancária vinculada ao consentimento.
+      parameters:
+      - in: path
+        name: account_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - accounts
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          description: No response body
+  /health:
+    get:
+      operationId: health_retrieve
+      description: |-
+        Endpoint simples para verificar a integridade da aplicação.
+        Retorna 200 OK com status da aplicação.
+      tags:
+      - health
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /open-banking/accounts/v1/accounts/:
+    get:
+      operationId: open_banking_accounts_v1_accounts_retrieve
+      description: |-
+        GET /open-banking/accounts/v1/accounts
+        Lista as contas bancárias do usuário autenticado vinculadas ao consentimento.
+      tags:
+      - open-banking
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          description: No response body
+  /open-banking/accounts/v1/accounts/{account_id}/:
+    get:
+      operationId: open_banking_accounts_v1_accounts_retrieve_2
+      description: |-
+        GET /open-banking/accounts/v1/accounts/{accountId}
+        Detalhes de uma conta bancária específica.
+      parameters:
+      - in: path
+        name: account_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - open-banking
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          description: No response body
+  /open-banking/accounts/v1/accounts/{account_id}/balances/:
+    get:
+      operationId: open_banking_accounts_v1_accounts_balances_retrieve
+      description: |-
+        GET /open-banking/accounts/v1/accounts/{accountId}/balances
+        Consulta de saldos (disponível, bloqueado, aplicado) de uma conta específica.
+      parameters:
+      - in: path
+        name: account_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - open-banking
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          description: No response body
+  /open-banking/accounts/v1/accounts/{account_id}/transactions/:
+    get:
+      operationId: open_banking_accounts_v1_accounts_transactions_retrieve
+      description: |-
+        GET /open-banking/accounts/v1/accounts/{accountId}/transactions
+        Consulta o extrato de transações de uma conta bancária vinculada ao consentimento.
+      parameters:
+      - in: path
+        name: account_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - open-banking
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          description: No response body
+  /open-banking/consents/v1/consents/:
+    get:
+      operationId: open_banking_consents_v1_consents_retrieve
+      description: |-
+        GET  /open-banking/consents/v1/consents  → lista paginada dos consentimentos do usuário
+        POST /open-banking/consents/v1/consents  → cria novo consentimento
+      tags:
+      - open-banking
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          description: No response body
+    post:
+      operationId: open_banking_consents_v1_consents_create
+      description: |-
+        GET  /open-banking/consents/v1/consents  → lista paginada dos consentimentos do usuário
+        POST /open-banking/consents/v1/consents  → cria novo consentimento
+      tags:
+      - open-banking
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          description: No response body
+  /open-banking/consents/v1/consents/{consent_id}/:
+    get:
+      operationId: open_banking_consents_v1_consents_retrieve_2
+      description: |-
+        GET    /open-banking/consents/v1/consents/{consentId}  → detalha consentimento
+        PATCH  /open-banking/consents/v1/consents/{consentId}  → autoriza ou rejeita
+        DELETE /open-banking/consents/v1/consents/{consentId}  → revoga
+      parameters:
+      - in: path
+        name: consent_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - open-banking
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          description: No response body
+    patch:
+      operationId: open_banking_consents_v1_consents_partial_update
+      description: |-
+        GET    /open-banking/consents/v1/consents/{consentId}  → detalha consentimento
+        PATCH  /open-banking/consents/v1/consents/{consentId}  → autoriza ou rejeita
+        DELETE /open-banking/consents/v1/consents/{consentId}  → revoga
+      parameters:
+      - in: path
+        name: consent_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - open-banking
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          description: No response body
+    delete:
+      operationId: open_banking_consents_v1_consents_destroy
+      description: |-
+        GET    /open-banking/consents/v1/consents/{consentId}  → detalha consentimento
+        PATCH  /open-banking/consents/v1/consents/{consentId}  → autoriza ou rejeita
+        DELETE /open-banking/consents/v1/consents/{consentId}  → revoga
+      parameters:
+      - in: path
+        name: consent_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - open-banking
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '204':
+          description: No response body
+  /transactions/{account_id}/transactions/:
+    get:
+      operationId: transactions_transactions_retrieve
+      description: |-
+        GET /open-banking/accounts/v1/accounts/{accountId}/transactions
+        Consulta o extrato de transações de uma conta bancária vinculada ao consentimento.
+      parameters:
+      - in: path
+        name: account_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - transactions
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          description: No response body
+components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
