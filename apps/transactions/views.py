@@ -10,14 +10,23 @@ from django.utils.dateparse import parse_date
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiResponse
+from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiParameter, OpenApiTypes
 
+from core.serializers import OpenFinanceErrorResponseSerializer
 from accounts.models import Account
 from consents.permissions import HasValidConsent
 from .models import Transaction
-from .serializers import TransactionSerializer
+from .serializers import TransactionSerializer, TransactionListEnvelopeSerializer
 
 PAGE_SIZE = 25
+
+CONSENT_HEADER_PARAM = OpenApiParameter(
+    name="X-Consent-Id",
+    type=OpenApiTypes.UUID,
+    location=OpenApiParameter.HEADER,
+    required=True,
+    description="UUID do consentimento ativo, autorizado e válido para o usuário autenticado."
+)
 
 
 def _paginated_response(request, queryset, serializer_class):
@@ -62,13 +71,28 @@ def _paginated_response(request, queryset, serializer_class):
 
 class TransactionListView(APIView):
     serializer_class = TransactionSerializer
-    """
-    GET /open-banking/accounts/v1/accounts/{accountId}/transactions
-    Consulta o extrato de transações de uma conta bancária vinculada ao consentimento.
-    """
     permission_classes = [IsAuthenticated, HasValidConsent]
     required_scope = "ACCOUNTS_TRANSACTIONS_READ"
 
+    @extend_schema(
+        summary="Consultar extrato de transações",
+        description="Consulta o extrato de movimentações e transações de uma conta bancária com suporte a filtros de período. Exige escopo `ACCOUNTS_TRANSACTIONS_READ`.",
+        parameters=[
+            CONSENT_HEADER_PARAM,
+            OpenApiParameter("account_id", OpenApiTypes.UUID, OpenApiParameter.PATH, description="UUID da conta bancária"),
+            OpenApiParameter("fromDate", OpenApiTypes.DATE, OpenApiParameter.QUERY, required=False, description="Data inicial do filtro no formato YYYY-MM-DD"),
+            OpenApiParameter("toDate", OpenApiTypes.DATE, OpenApiParameter.QUERY, required=False, description="Data final do filtro no formato YYYY-MM-DD"),
+            OpenApiParameter("page", OpenApiTypes.INT, OpenApiParameter.QUERY, required=False, default=1, description="Número da página"),
+            OpenApiParameter("page-size", OpenApiTypes.INT, OpenApiParameter.QUERY, required=False, default=PAGE_SIZE, description="Quantidade de registros por página"),
+        ],
+        responses={
+            200: TransactionListEnvelopeSerializer,
+            401: OpenApiResponse(description="Não autenticado"),
+            403: OpenFinanceErrorResponseSerializer,
+            404: OpenApiResponse(description="Conta não encontrada"),
+        },
+        tags=["Open Finance - Transações"]
+    )
     def get(self, request, account_id):
         account = get_object_or_404(Account, account_id=account_id, user=request.user)
         queryset = Transaction.objects.filter(account=account).order_by("-transaction_date_time")
@@ -88,3 +112,4 @@ class TransactionListView(APIView):
                 queryset = queryset.filter(transaction_date__lte=dt_to)
 
         return _paginated_response(request, queryset, TransactionSerializer)
+
