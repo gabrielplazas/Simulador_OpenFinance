@@ -72,3 +72,26 @@ class AccountSerializer(serializers.ModelSerializer):
             'checkDigit',
             'currency',
         ]
+
+
+# ---------------------------------------------------------------------------
+# Envelopes de Resposta Open Finance (Documentação OpenAPI / Swagger)
+# ---------------------------------------------------------------------------
+
+class AccountResponseEnvelopeSerializer(serializers.Serializer):
+    """Envelope de resposta para item único de conta."""
+    data = AccountSerializer()
+
+
+class AccountListEnvelopeSerializer(serializers.Serializer):
+    """Envelope de resposta para lista paginada de contas."""
+    from core.serializers import PaginationLinksSerializer, PaginationMetaSerializer
+    data = AccountSerializer(many=True)
+    links = PaginationLinksSerializer()
+    meta = PaginationMetaSerializer()
+
+
+class BalanceResponseEnvelopeSerializer(serializers.Serializer):
+    """Envelope de resposta para saldo de conta."""
+    data = BalanceSerializer()
+
