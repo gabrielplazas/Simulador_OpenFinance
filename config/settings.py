@@ -150,11 +150,37 @@ REST_FRAMEWORK = {
 # drf-spectacular - Documentação OpenAPI 3.0 (Swagger)
 SPECTACULAR_SETTINGS = {
     'TITLE': 'Open Finance Brasil - API Simulada',
-    'DESCRIPTION': 'Projeto de simulação do padrão Open Finance Brasil com consentimento e escopos granulares',
+    'DESCRIPTION': (
+        'Documentação OpenAPI 3.0 do Simulador do Open Finance Brasil.\n\n'
+        'Este ambiente simula o Banco Transmissor (Detentor de Conta) implementando os contratos oficiais '
+        'de Consentimento, Contas, Saldos e Extratos com autorização baseada em escopos regulatórios e header `X-Consent-Id`.'
+    ),
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
     'SWAGGER_UI_SETTINGS': {
         'deepLinking': True,
         'displayRequestDuration': True,
+        'filter': True,
+        'docExpansion': 'list',
+        'defaultModelsExpandDepth': 2,
     },
+    'TAGS': [
+        {
+            'name': 'Open Finance - Consentimentos',
+            'description': 'Ciclo de vida do consentimento: criação, consulta, autorização/rejeição (PATCH) e revogação (DELETE).'
+        },
+        {
+            'name': 'Open Finance - Contas',
+            'description': 'Consulta de contas bancárias e saldos contábeis protegidos pelo header X-Consent-Id.'
+        },
+        {
+            'name': 'Open Finance - Transações',
+            'description': 'Consulta de extratos e histórico de movimentações com filtros por período.'
+        },
+        {
+            'name': 'Utilitários',
+            'description': 'Endpoints de autenticação para sessão no Swagger UI e healthcheck da aplicação.'
+        },
+    ],
 }
+

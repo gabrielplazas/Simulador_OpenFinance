@@ -39,14 +39,15 @@ O projeto foi construído como peça de **portfólio técnico avançado**, demon
 | **Infraestrutura & Docker** | Docker Compose com serviços `web` (Django) e `db` (PostgreSQL 15) |
 | **Seed de Dados** | `python manage.py seed_data` populando usuários, contas, saldos, consentimentos e dezenas de transações |
 | **Admin Django** | Painel administrativo completo configurado com filtros e inlines |
+| **Swagger / OpenAPI 3.0** | Documentação interativa completa via `drf-spectacular` em `/api/docs/`, `/api/redoc/` e schema em `/api/schema/` com suporte a `X-Consent-Id`, envelopes regulatórios e testes via Basic Auth / Session Auth |
 
 ### 🔄 Próximas Etapas Planejadas
 
 | Componente | Detalhes |
 |---|---|
-| **Swagger / OpenAPI 3.0** | Documentação interativa via `drf-spectacular` |
 | **Dashboard Frontend** | Interface SPA em React + TypeScript para consumo do agregador |
 | **Iniciação de Pagamentos Pix** | Simulação da Fase 3 do Open Finance (ITP) |
+
 
 ---
 
