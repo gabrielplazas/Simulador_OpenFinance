@@ -28,10 +28,17 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiResponse
+from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiResponse, OpenApiParameter, OpenApiTypes
 
+from core.serializers import OpenFinanceErrorResponseSerializer
 from .models import Consent, ConsentStatus
-from .serializers import ConsentCreateSerializer, ConsentSerializer
+from .serializers import (
+    ConsentCreateSerializer,
+    ConsentSerializer,
+    ConsentStatusUpdateSerializer,
+    ConsentResponseEnvelopeSerializer,
+    ConsentListEnvelopeSerializer,
+)
 
 # ---------------------------------------------------------------------------
 # Constantes de transição de status permitidas via PATCH
@@ -120,12 +127,21 @@ def _paginated_response(request, queryset):
 
 class ConsentListCreateView(APIView):
     serializer_class = ConsentSerializer
-    """
-    GET  /open-banking/consents/v1/consents  → lista paginada dos consentimentos do usuário
-    POST /open-banking/consents/v1/consents  → cria novo consentimento
-    """
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(
+        summary="Listar consentimentos",
+        description="Retorna a lista paginada dos consentimentos do usuário autenticado.",
+        parameters=[
+            OpenApiParameter("page", OpenApiTypes.INT, OpenApiParameter.QUERY, description="Número da página", default=1),
+            OpenApiParameter("page-size", OpenApiTypes.INT, OpenApiParameter.QUERY, description="Quantidade de registros por página", default=PAGE_SIZE),
+        ],
+        responses={
+            200: ConsentListEnvelopeSerializer,
+            401: OpenApiResponse(description="Não autenticado"),
+        },
+        tags=["Open Finance - Consentimentos"]
+    )
     def get(self, request):
         queryset = (
             Consent.objects
@@ -134,6 +150,31 @@ class ConsentListCreateView(APIView):
         )
         return _paginated_response(request, queryset)
 
+    @extend_schema(
+        summary="Criar novo consentimento",
+        description="Solicita a criação de um consentimento de compartilhamento de dados financeiros.",
+        request=ConsentCreateSerializer,
+        responses={
+            201: ConsentResponseEnvelopeSerializer,
+            422: OpenFinanceErrorResponseSerializer,
+            401: OpenApiResponse(description="Não autenticado"),
+        },
+        examples=[
+            OpenApiExample(
+                "Criar consentimento com escopos de contas e transações",
+                value={
+                    "permissions": [
+                        "ACCOUNTS_READ",
+                        "ACCOUNTS_BALANCES_READ",
+                        "ACCOUNTS_TRANSACTIONS_READ"
+                    ],
+                    "expirationDays": 90
+                },
+                request_only=True
+            )
+        ],
+        tags=["Open Finance - Consentimentos"]
+    )
     def post(self, request):
         serializer = ConsentCreateSerializer(data=request.data)
         if not serializer.is_valid():
@@ -159,11 +200,6 @@ class ConsentListCreateView(APIView):
 
 class ConsentDetailView(APIView):
     serializer_class = ConsentSerializer
-    """
-    GET    /open-banking/consents/v1/consents/{consentId}  → detalha consentimento
-    PATCH  /open-banking/consents/v1/consents/{consentId}  → autoriza ou rejeita
-    DELETE /open-banking/consents/v1/consents/{consentId}  → revoga
-    """
     permission_classes = [IsAuthenticated]
 
     def _get_consent_or_404(self, request, consent_id):
@@ -174,10 +210,50 @@ class ConsentDetailView(APIView):
         """
         return get_object_or_404(Consent, consent_id=consent_id, user=request.user)
 
+    @extend_schema(
+        summary="Consultar consentimento",
+        description="Consulta os detalhes e o status atual de um consentimento específico pelo seu UUID.",
+        parameters=[
+            OpenApiParameter("consent_id", OpenApiTypes.UUID, OpenApiParameter.PATH, description="UUID do consentimento")
+        ],
+        responses={
+            200: ConsentResponseEnvelopeSerializer,
+            404: OpenFinanceErrorResponseSerializer,
+            401: OpenApiResponse(description="Não autenticado"),
+        },
+        tags=["Open Finance - Consentimentos"]
+    )
     def get(self, request, consent_id):
         consent = self._get_consent_or_404(request, consent_id)
         return Response(_data_envelope(ConsentSerializer(consent).data))
 
+    @extend_schema(
+        summary="Atualizar status do consentimento",
+        description="Permite que o usuário autorize (AUTHORISED) ou rejeite (REJECTED) um consentimento que esteja aguardando autorização.",
+        parameters=[
+            OpenApiParameter("consent_id", OpenApiTypes.UUID, OpenApiParameter.PATH, description="UUID do consentimento")
+        ],
+        request=ConsentStatusUpdateSerializer,
+        responses={
+            200: ConsentResponseEnvelopeSerializer,
+            422: OpenFinanceErrorResponseSerializer,
+            404: OpenFinanceErrorResponseSerializer,
+            401: OpenApiResponse(description="Não autenticado"),
+        },
+        examples=[
+            OpenApiExample(
+                "Autorizar Consentimento",
+                value={"status": "AUTHORISED"},
+                request_only=True
+            ),
+            OpenApiExample(
+                "Rejeitar Consentimento",
+                value={"status": "REJECTED"},
+                request_only=True
+            )
+        ],
+        tags=["Open Finance - Consentimentos"]
+    )
     def patch(self, request, consent_id):
         consent = self._get_consent_or_404(request, consent_id)
 
@@ -223,6 +299,20 @@ class ConsentDetailView(APIView):
         consent.save(update_fields=["status", "status_update_date_time"])
         return Response(_data_envelope(ConsentSerializer(consent).data))
 
+    @extend_schema(
+        summary="Revogar consentimento",
+        description="Revoga um consentimento previamente autorizado (AUTHORISED), cessando imediatamente o acesso aos dados.",
+        parameters=[
+            OpenApiParameter("consent_id", OpenApiTypes.UUID, OpenApiParameter.PATH, description="UUID do consentimento")
+        ],
+        responses={
+            204: OpenApiResponse(description="Consentimento revogado com sucesso."),
+            422: OpenFinanceErrorResponseSerializer,
+            404: OpenFinanceErrorResponseSerializer,
+            401: OpenApiResponse(description="Não autenticado"),
+        },
+        tags=["Open Finance - Consentimentos"]
+    )
     def delete(self, request, consent_id):
         consent = self._get_consent_or_404(request, consent_id)
 
@@ -241,3 +331,4 @@ class ConsentDetailView(APIView):
         consent.status = ConsentStatus.REVOKED
         consent.save(update_fields=["status", "status_update_date_time"])
         return Response(status=status.HTTP_204_NO_CONTENT)
+
