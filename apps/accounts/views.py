@@ -11,13 +11,29 @@ from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiResponse
+from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiParameter, OpenApiTypes
 
+from core.serializers import OpenFinanceErrorResponseSerializer
 from consents.permissions import HasValidConsent
 from .models import Account
-from .serializers import AccountSerializer, BalanceSerializer
+from .serializers import (
+    AccountSerializer,
+    BalanceSerializer,
+    AccountResponseEnvelopeSerializer,
+    AccountListEnvelopeSerializer,
+    BalanceResponseEnvelopeSerializer,
+)
 
 PAGE_SIZE = 25
+
+# Parâmetro global de cabeçalho Open Finance
+CONSENT_HEADER_PARAM = OpenApiParameter(
+    name="X-Consent-Id",
+    type=OpenApiTypes.UUID,
+    location=OpenApiParameter.HEADER,
+    required=True,
+    description="UUID do consentimento ativo, autorizado e válido para o usuário autenticado."
+)
 
 
 def _data_envelope(serializer_data):
@@ -67,13 +83,24 @@ def _paginated_response(request, queryset, serializer_class):
 
 class AccountListView(APIView):
     serializer_class = AccountSerializer
-    """
-    GET /open-banking/accounts/v1/accounts
-    Lista as contas bancárias do usuário autenticado vinculadas ao consentimento.
-    """
     permission_classes = [IsAuthenticated, HasValidConsent]
     required_scope = "ACCOUNTS_READ"
 
+    @extend_schema(
+        summary="Listar contas bancárias",
+        description="Retorna a lista paginada das contas bancárias do usuário autenticado vinculadas ao consentimento informado. Exige escopo `ACCOUNTS_READ`.",
+        parameters=[
+            CONSENT_HEADER_PARAM,
+            OpenApiParameter("page", OpenApiTypes.INT, OpenApiParameter.QUERY, description="Número da página", default=1),
+            OpenApiParameter("page-size", OpenApiTypes.INT, OpenApiParameter.QUERY, description="Quantidade de registros por página", default=PAGE_SIZE),
+        ],
+        responses={
+            200: AccountListEnvelopeSerializer,
+            401: OpenApiResponse(description="Não autenticado"),
+            403: OpenFinanceErrorResponseSerializer,
+        },
+        tags=["Open Finance - Contas"]
+    )
     def get(self, request):
         queryset = Account.objects.filter(user=request.user).order_by("-created_at")
         return _paginated_response(request, queryset, AccountSerializer)
@@ -81,13 +108,24 @@ class AccountListView(APIView):
 
 class AccountDetailView(APIView):
     serializer_class = AccountSerializer
-    """
-    GET /open-banking/accounts/v1/accounts/{accountId}
-    Detalhes de uma conta bancária específica.
-    """
     permission_classes = [IsAuthenticated, HasValidConsent]
     required_scope = "ACCOUNTS_READ"
 
+    @extend_schema(
+        summary="Detalhes de uma conta bancária",
+        description="Consulta informações cadastrais de uma conta específica pertencente ao usuário. Exige escopo `ACCOUNTS_READ`.",
+        parameters=[
+            CONSENT_HEADER_PARAM,
+            OpenApiParameter("account_id", OpenApiTypes.UUID, OpenApiParameter.PATH, description="UUID da conta bancária"),
+        ],
+        responses={
+            200: AccountResponseEnvelopeSerializer,
+            401: OpenApiResponse(description="Não autenticado"),
+            403: OpenFinanceErrorResponseSerializer,
+            404: OpenApiResponse(description="Conta não encontrada"),
+        },
+        tags=["Open Finance - Contas"]
+    )
     def get(self, request, account_id):
         account = get_object_or_404(Account, account_id=account_id, user=request.user)
         return Response(_data_envelope(AccountSerializer(account).data))
@@ -95,13 +133,24 @@ class AccountDetailView(APIView):
 
 class AccountBalanceView(APIView):
     serializer_class = BalanceSerializer
-    """
-    GET /open-banking/accounts/v1/accounts/{accountId}/balances
-    Consulta de saldos (disponível, bloqueado, aplicado) de uma conta específica.
-    """
     permission_classes = [IsAuthenticated, HasValidConsent]
     required_scope = "ACCOUNTS_BALANCES_READ"
 
+    @extend_schema(
+        summary="Consultar saldos da conta",
+        description="Consulta os saldos contábil disponível, bloqueado e aplicado de uma conta específica. Exige escopo `ACCOUNTS_BALANCES_READ`.",
+        parameters=[
+            CONSENT_HEADER_PARAM,
+            OpenApiParameter("account_id", OpenApiTypes.UUID, OpenApiParameter.PATH, description="UUID da conta bancária"),
+        ],
+        responses={
+            200: BalanceResponseEnvelopeSerializer,
+            401: OpenApiResponse(description="Não autenticado"),
+            403: OpenFinanceErrorResponseSerializer,
+            404: OpenFinanceErrorResponseSerializer,
+        },
+        tags=["Open Finance - Contas"]
+    )
     def get(self, request, account_id):
         account = get_object_or_404(Account, account_id=account_id, user=request.user)
         balance = getattr(account, 'balance', None)
@@ -111,3 +160,4 @@ class AccountBalanceView(APIView):
                 status=404,
             )
         return Response(_data_envelope(BalanceSerializer(balance).data))
+

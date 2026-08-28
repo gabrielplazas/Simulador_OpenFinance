@@ -44,3 +44,16 @@ class TransactionSerializer(serializers.ModelSerializer):
             'payeeCnpjCpf',
             'payeeName',
         ]
+
+
+# ---------------------------------------------------------------------------
+# Envelope de Resposta Open Finance (Documentação OpenAPI / Swagger)
+# ---------------------------------------------------------------------------
+
+class TransactionListEnvelopeSerializer(serializers.Serializer):
+    """Envelope de resposta para extrato paginado de transações."""
+    from core.serializers import PaginationLinksSerializer, PaginationMetaSerializer
+    data = TransactionSerializer(many=True)
+    links = PaginationLinksSerializer()
+    meta = PaginationMetaSerializer()
+
