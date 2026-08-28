@@ -148,3 +148,38 @@ class ConsentCreateSerializer(serializers.Serializer):
             status=ConsentStatus.AWAITING_AUTHORISATION,
         )
         return consent
+
+
+# ---------------------------------------------------------------------------
+# Serializer de atualização de status (PATCH)
+# ---------------------------------------------------------------------------
+
+class ConsentStatusUpdateSerializer(serializers.Serializer):
+    """
+    Serializer de alteração de status do consentimento.
+    """
+    status = serializers.ChoiceField(
+        choices=[
+            (ConsentStatus.AUTHORISED, 'Autorizar consentimento'),
+            (ConsentStatus.REJECTED, 'Rejeitar consentimento'),
+        ],
+        help_text="Novo status a ser aplicado (AUTHORISED ou REJECTED)."
+    )
+
+
+# ---------------------------------------------------------------------------
+# Envelopes de Resposta Open Finance (Documentação OpenAPI / Swagger)
+# ---------------------------------------------------------------------------
+
+class ConsentResponseEnvelopeSerializer(serializers.Serializer):
+    """Envelope de resposta para item único de consentimento."""
+    data = ConsentSerializer()
+
+
+class ConsentListEnvelopeSerializer(serializers.Serializer):
+    """Envelope de resposta para lista paginada de consentimentos."""
+    from core.serializers import PaginationLinksSerializer, PaginationMetaSerializer
+    data = ConsentSerializer(many=True)
+    links = PaginationLinksSerializer()
+    meta = PaginationMetaSerializer()
+
