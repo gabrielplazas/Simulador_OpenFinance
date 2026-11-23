@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     # Third party apps
     'rest_framework',
     'drf_spectacular',
+    'drf_spectacular_sidecar',
     
     # Local apps
     'accounts',
@@ -134,13 +135,14 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Django REST Framework configuration
 REST_FRAMEWORK = {
+    'EXCEPTION_HANDLER': 'core.errors.exception_handler',
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.BasicAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
     'PAGE_SIZE': 25,
@@ -150,11 +152,11 @@ REST_FRAMEWORK = {
 # drf-spectacular - Documentação OpenAPI 3.0 (Swagger)
 SPECTACULAR_SETTINGS = {
     'TITLE': 'Open Finance Brasil - API Simulada',
-    'DESCRIPTION': (
-        'Documentação OpenAPI 3.0 do Simulador do Open Finance Brasil.\n\n'
-        'Este ambiente simula o Banco Transmissor (Detentor de Conta) implementando os contratos oficiais '
-        'de Consentimento, Contas, Saldos e Extratos com autorização baseada em escopos regulatórios e header `X-Consent-Id`.'
-    ),
+    'DESCRIPTION': 'Simulador de portfólio. Use Basic Auth com ana.silva e Senha@123 após o seed. Comece em /demo/accounts e crie um consentimento. X-Consent-Id simula o vínculo com o token.',
+    'SWAGGER_UI_DIST': 'SIDECAR',
+    'SWAGGER_UI_FAVICON_HREF': 'SIDECAR',
+    'REDOC_DIST': 'SIDECAR',
+    'PREPROCESSING_HOOKS': ['core.schema.public_demo_routes'],
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
     'SWAGGER_UI_SETTINGS': {

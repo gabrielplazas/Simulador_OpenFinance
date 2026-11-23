@@ -6,7 +6,7 @@ Estrutura de endpoints:
 """
 import math
 from django.shortcuts import get_object_or_404
-from django.utils.dateparse import parse_date
+from rest_framework import serializers
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -49,7 +49,10 @@ def _paginated_response(request, queryset, serializer_class):
     base_url = request.build_absolute_uri(request.path)
 
     def page_url(p):
-        return f"{base_url}?page={p}&page-size={page_size}"
+        params = request.query_params.copy()
+        params["page"] = p
+        params["page-size"] = page_size
+        return f"{base_url}?{params.urlencode()}"
 
     links = {
         "self": page_url(page),
@@ -94,7 +97,7 @@ class TransactionListView(APIView):
         tags=["Open Finance - Transações"]
     )
     def get(self, request, account_id):
-        account = get_object_or_404(Account, account_id=account_id, user=request.user)
+        account = get_object_or_404(request.consent.accounts, account_id=account_id, user=request.user)
         queryset = Transaction.objects.filter(account=account).order_by("-transaction_date_time")
 
         # Filtros de data opcionais conforme padrão Open Finance (fromDate, toDate)
@@ -102,12 +105,12 @@ class TransactionListView(APIView):
         to_date_param = request.query_params.get("toDate")
 
         if from_date_param:
-            dt_from = parse_date(from_date_param)
+            dt_from = serializers.DateField().run_validation(from_date_param)
             if dt_from:
                 queryset = queryset.filter(transaction_date__gte=dt_from)
 
         if to_date_param:
-            dt_to = parse_date(to_date_param)
+            dt_to = serializers.DateField().run_validation(to_date_param)
             if dt_to:
                 queryset = queryset.filter(transaction_date__lte=dt_to)
 

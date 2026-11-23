@@ -102,7 +102,7 @@ class AccountListView(APIView):
         tags=["Open Finance - Contas"]
     )
     def get(self, request):
-        queryset = Account.objects.filter(user=request.user).order_by("-created_at")
+        queryset = request.consent.accounts.filter(user=request.user).order_by("-created_at")
         return _paginated_response(request, queryset, AccountSerializer)
 
 
@@ -127,7 +127,7 @@ class AccountDetailView(APIView):
         tags=["Open Finance - Contas"]
     )
     def get(self, request, account_id):
-        account = get_object_or_404(Account, account_id=account_id, user=request.user)
+        account = get_object_or_404(request.consent.accounts, account_id=account_id, user=request.user)
         return Response(_data_envelope(AccountSerializer(account).data))
 
 
@@ -152,7 +152,7 @@ class AccountBalanceView(APIView):
         tags=["Open Finance - Contas"]
     )
     def get(self, request, account_id):
-        account = get_object_or_404(Account, account_id=account_id, user=request.user)
+        account = get_object_or_404(request.consent.accounts, account_id=account_id, user=request.user)
         balance = getattr(account, 'balance', None)
         if not balance:
             return Response(

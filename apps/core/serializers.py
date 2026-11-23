@@ -16,10 +16,10 @@ class OpenFinanceErrorResponseSerializer(serializers.Serializer):
 class PaginationLinksSerializer(serializers.Serializer):
     """Estrutura padrão de links de navegação da paginação."""
     self = serializers.CharField(help_text="URL da página atual")
-    first = serializers.CharField(help_text="URL da primeira página")
+    first = serializers.CharField(required=False, help_text="URL da primeira página")
     prev = serializers.CharField(allow_null=True, required=False, help_text="URL da página anterior")
     next = serializers.CharField(allow_null=True, required=False, help_text="URL da próxima página")
-    last = serializers.CharField(help_text="URL da última página")
+    last = serializers.CharField(required=False, help_text="URL da última página")
 
 
 class PaginationMetaSerializer(serializers.Serializer):

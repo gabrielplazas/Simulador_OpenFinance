@@ -66,7 +66,7 @@ class HasValidConsent(BasePermission):
 
         # Validação do formato UUID
         try:
-            consent_uuid = uuid.UUID(str(raw_consent_id).strip())
+            consent_uuid = uuid.UUID(raw_consent_id.strip().removeprefix("urn:portfolio:"))
         except (ValueError, TypeError):
             raise OpenFinancePermissionDenied(
                 code="INVALID_CONSENT_ID_FORMAT",
@@ -86,7 +86,7 @@ class HasValidConsent(BasePermission):
 
         # 4. Verificar validade do consentimento (is_valid: status AUTHORISED + dentro do prazo)
         if not consent.is_valid:
-            if consent.status == ConsentStatus.REVOKED:
+            if consent.status == ConsentStatus.REVOKED or consent.rejection_reason == "CUSTOMER_MANUALLY_REVOKED":
                 raise OpenFinancePermissionDenied(
                     code="CONSENT_REVOKED",
                     title="Consentimento revogado",

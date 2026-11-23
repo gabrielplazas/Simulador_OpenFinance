@@ -29,6 +29,7 @@ class Account(models.Model):
         editable=False,
         verbose_name='ID da Conta (Open Finance)'
     )
+    compe_code = models.CharField(max_length=3, default="000", validators=[RegexValidator(r"^[0-9]{3}$")])
     brand_name = models.CharField(max_length=80, verbose_name='Nome da Marca')
     company_cnpj = models.CharField(
         max_length=14,

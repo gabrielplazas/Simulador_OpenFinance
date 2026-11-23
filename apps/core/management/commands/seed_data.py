@@ -26,11 +26,11 @@ from transactions.models import (
 # ---------------------------------------------------------------------------
 
 INSTITUICOES = [
-    {"brand": "Banco Itaú S.A.", "cnpj": "60701190000104"},
-    {"brand": "Banco Bradesco S.A.", "cnpj": "60746948000112"},
-    {"brand": "Banco do Brasil S.A.", "cnpj": "00000000000191"},
-    {"brand": "Nubank Pagamentos S.A.", "cnpj": "18236120000158"},
-    {"brand": "Caixa Econômica Federal", "cnpj": "00360305000104"},
+    {"brand": "Banco Itaú S.A.", "cnpj": "60701190000104", "compe": "341"},
+    {"brand": "Banco Bradesco S.A.", "cnpj": "60746948000112", "compe": "237"},
+    {"brand": "Banco do Brasil S.A.", "cnpj": "00000000000191", "compe": "001"},
+    {"brand": "Nubank Pagamentos S.A.", "cnpj": "18236120000158", "compe": "260"},
+    {"brand": "Caixa Econômica Federal", "cnpj": "00360305000104", "compe": "104"},
 ]
 
 USUARIOS_SEED = [
@@ -109,11 +109,8 @@ class Command(BaseCommand):
     # -----------------------------------------------------------------------
 
     def _clear_data(self):
-        Transaction.objects.all().delete()
-        Consent.objects.all().delete()
-        Balance.objects.all().delete()
-        Account.objects.all().delete()
-        User.objects.filter(is_superuser=False).delete()
+        usernames = [entry["username"] for entry in USUARIOS_SEED]
+        User.objects.filter(username__in=usernames, is_superuser=False).delete()
         self.stdout.write("   Dados removidos.")
 
     def _criar_usuarios(self):
@@ -144,12 +141,12 @@ class Command(BaseCommand):
 
         for i, user in enumerate(usuarios):
             # Cada usuário recebe 1 ou 2 contas
-            n_contas = random.randint(1, 2)
+            n_contas = 2 if i == 0 else 1
             for j in range(n_contas):
                 instituicao = INSTITUICOES[(i + j) % len(INSTITUICOES)]
 
-                numero = str(random.randint(10000, 99999))
-                agencia = str(random.randint(1000, 9999))
+                numero = f"{10000000 + i * 10 + j}"
+                agencia = "0001"
                 digito = str(random.randint(0, 9))
 
                 conta, created = Account.objects.get_or_create(
@@ -158,6 +155,7 @@ class Command(BaseCommand):
                     branch_code=agencia,
                     defaults={
                         "brand_name": instituicao["brand"],
+                        "compe_code": instituicao["compe"],
                         "company_cnpj": instituicao["cnpj"],
                         "type": random.choice(tipos),
                         "subtype": random.choice(subtipos),
@@ -202,12 +200,15 @@ class Command(BaseCommand):
                 # Expiração: entre 30 e 365 dias a partir de agora
                 expiracao = agora + timedelta(days=random.randint(30, 365))
 
-                Consent.objects.create(
+                consent = Consent.objects.create(
                     user=user,
                     status=status,
                     permissions=permissoes,
                     expiration_date_time=expiracao,
                 )
+
+                if status == ConsentStatus.AUTHORISED:
+                    consent.accounts.set(user.accounts.all())
 
         total = Consent.objects.count()
         self.stdout.write(f"   ✓ {total} consentimentos criados")
@@ -222,8 +223,8 @@ class Command(BaseCommand):
             for _ in range(n_tx):
                 credit_debit = random.choice(list(CreditDebitType))
                 tipo_tx = random.choice(tipos_tx)
-                dias_atras = random.randint(0, 90)
-                dt = agora - timedelta(days=dias_atras, hours=random.randint(0, 23))
+                dias_atras = 0 if _ == 0 else random.randint(0, 90)
+                dt = agora if _ == 0 else agora - timedelta(days=dias_atras, hours=random.randint(0, 23))
 
                 descricoes = (
                     DESCRICOES_CREDITO if credit_debit == CreditDebitType.CREDITO

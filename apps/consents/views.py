@@ -22,6 +22,7 @@ Formato de erro (422):
   { "errors": [{ "code": "...", "title": "...", "detail": "..." }] }
 """
 import math
+from django.db import transaction
 
 from django.shortcuts import get_object_or_404
 from rest_framework import status
@@ -254,13 +255,19 @@ class ConsentDetailView(APIView):
         ],
         tags=["Open Finance - Consentimentos"]
     )
+    @transaction.atomic
     def patch(self, request, consent_id):
         consent = self._get_consent_or_404(request, consent_id)
 
+        consent = get_object_or_404(Consent.objects.select_for_update(), pk=consent.pk)
+        if consent.logged_user:
+            return _error_response("USE_DEMO_APPROVAL", "Jornada de autorização", "Use /demo/consents/{consentId}/decision.", 422)
+        if not isinstance(request.data, dict):
+            return _error_response("INVALID_PAYLOAD", "Dados inválidos", "Informe um objeto.", 422)
         new_status = request.data.get("status")
 
         # Valida presença do campo
-        if not new_status:
+        if not isinstance(new_status, str) or not new_status:
             return _error_response(
                 code="INVALID_PAYLOAD",
                 title="Campo obrigatório ausente",
@@ -295,6 +302,8 @@ class ConsentDetailView(APIView):
                 http_status=status.HTTP_422_UNPROCESSABLE_ENTITY,
             )
 
+        if new_status == ConsentStatus.AUTHORISED:
+            consent.accounts.set(request.user.accounts.all())
         consent.status = new_status
         consent.save(update_fields=["status", "status_update_date_time"])
         return Response(_data_envelope(ConsentSerializer(consent).data))
@@ -328,6 +337,8 @@ class ConsentDetailView(APIView):
                 http_status=status.HTTP_422_UNPROCESSABLE_ENTITY,
             )
 
+        if consent.logged_user:
+            return _error_response("USE_V3", "Consentimento v3", "Revogue pela rota v3.", 422)
         consent.status = ConsentStatus.REVOKED
         consent.save(update_fields=["status", "status_update_date_time"])
         return Response(status=status.HTTP_204_NO_CONTENT)

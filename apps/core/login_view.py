@@ -15,7 +15,6 @@ class LoginSerializer(serializers.Serializer):
 class LoginResponseSerializer(serializers.Serializer):
     status = serializers.CharField()
     username = serializers.CharField()
-    sessionid = serializers.CharField()
     message = serializers.CharField()
 
 
@@ -40,8 +39,10 @@ class LoginView(APIView):
         ]
     )
     def post(self, request):
-        username = request.data.get('username')
-        password = request.data.get('password')
+        payload = LoginSerializer(data=request.data)
+        payload.is_valid(raise_exception=True)
+        username = payload.validated_data['username']
+        password = payload.validated_data['password']
         
         if not username or not password:
             return Response(
@@ -61,8 +62,7 @@ class LoginView(APIView):
             return Response({
                 'status': 'logged_in',
                 'username': user.username,
-                'sessionid': request.session.session_key,
-                'message': 'Use o valor de sessionid no cookieAuth do Swagger'
+                'message': 'Sessão iniciada neste navegador.'
             }, status=status.HTTP_200_OK)
         
         return Response(
@@ -75,6 +75,7 @@ class LogoutView(APIView):
     @extend_schema(
         summary='Logout via API',
         description='Invalida sessão atual e remove cookie',
+        request=None,
         responses={200: dict}
     )
     def post(self, request):

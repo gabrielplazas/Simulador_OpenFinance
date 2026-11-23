@@ -1,6 +1,7 @@
 # ─── Core ─────────────────────────────────────────────────────────────────────
 Django>=5.0,<5.1
 djangorestframework>=3.15,<3.16
+drf-spectacular[sidecar]>=0.28,<0.30
 
 # ─── Banco de dados ───────────────────────────────────────────────────────────
 psycopg2-binary>=2.9.9     # driver PostgreSQL
@@ -17,5 +18,5 @@ pytest-django>=4.8.0
 
 # ─── Futuras dependências planejadas ──────────────────────────────────────────
 # djangorestframework-camel-case  # conversão automática snake_case ↔ camelCase
-# drf-spectacular                  # geração de documentação Swagger/OpenAPI
+
 # django-oauth-toolkit             # fluxo OAuth2 para autenticação e consentimento
